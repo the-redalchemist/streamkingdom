@@ -5,6 +5,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:streamkingdom/models/language_data.dart';
+import 'dart:io' show Platform;
 
 import '../cubits/app_bar/ThemeProvider.dart';
 import '../languages/languages.dart';
@@ -34,7 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         bottom: false,
         child: SettingsList(
           // applicationType: ApplicationType.both,
-          // platform: DevicePlatform.web,
+          platform:
+              (Platform.isWindows) ? DevicePlatform.web : DevicePlatform.device,
           sections: [
             SettingsSection(
               title: Text(Languages.of(context)?.appearance ?? "Appearance"),
@@ -138,6 +140,8 @@ class LanguagePickerScreen extends StatelessWidget {
       appBar:
           AppBar(title: Text(Languages.of(context)?.languages ?? 'Languages')),
       body: SettingsList(
+        platform:
+            (Platform.isWindows) ? DevicePlatform.web : DevicePlatform.device,
         sections: [
           SettingsSection(
             title: Text(Languages.of(context)?.selectLanguages ??
@@ -304,11 +308,12 @@ class _HomeOrderScreenState extends State<HomeOrderScreen> {
             appBar: AppBar(
               leading: BackButton(
                 onPressed: () {
-                  if(checkIfActiveListEmpty()) {
+                  if (checkIfActiveListEmpty()) {
                     MyApp.reloadAll(context);
                     Navigator.of(context).pop();
                   } else {
                     print("nope its empty");
+                    showAlertDialog(context);
                   }
                 },
               ),
@@ -383,22 +388,26 @@ class _HomeOrderScreenState extends State<HomeOrderScreen> {
   _onItemReorder(
       int oldItemIndex, int oldListIndex, int newItemIndex, int newListIndex) {
     setState(() {
-      var movedItem = _contents[oldListIndex].children.removeAt(oldItemIndex);
-      _contents[newListIndex].children.insert(newItemIndex, movedItem);
-      String movedString;
-      if (oldListIndex == 0) {
-        movedString = savebleActiveList.removeAt(oldItemIndex);
+      if (oldListIndex == 0 && _contents[oldListIndex].children.length <= 1) {
+        showAlertDialog(context);
       } else {
-        movedString = savebleInactiveList.removeAt(oldItemIndex);
+        var movedItem = _contents[oldListIndex].children.removeAt(oldItemIndex);
+        _contents[newListIndex].children.insert(newItemIndex, movedItem);
+        String movedString;
+        if (oldListIndex == 0) {
+          movedString = savebleActiveList.removeAt(oldItemIndex);
+        } else {
+          movedString = savebleInactiveList.removeAt(oldItemIndex);
+        }
+        if (newListIndex == 0) {
+          savebleActiveList.insert(newItemIndex, movedString);
+        } else {
+          savebleInactiveList.insert(newItemIndex, movedString);
+        }
+        SavePreference pre = SavePreference();
+        pre.setOrderListActive(savebleActiveList);
+        pre.setOrderListInactive(savebleInactiveList);
       }
-      if (newListIndex == 0) {
-        savebleActiveList.insert(newItemIndex, movedString);
-      } else {
-        savebleInactiveList.insert(newItemIndex, movedString);
-      }
-      SavePreference pre = SavePreference();
-      pre.setOrderListActive(savebleActiveList);
-      pre.setOrderListInactive(savebleInactiveList);
     });
   }
 
@@ -431,10 +440,37 @@ class _HomeOrderScreenState extends State<HomeOrderScreen> {
 
   bool checkIfActiveListEmpty() {
     // print(savebleActiveList);
-    if(savebleActiveList.isEmpty) {
+    if (savebleActiveList.isEmpty) {
       return false;
     } else {
       return true;
     }
   }
+}
+
+showAlertDialog(BuildContext context) {
+  // set up the button
+  Widget okButton = TextButton(
+    child: Text("OK"),
+    onPressed: () {
+      Navigator.of(context).pop();
+    },
+  );
+
+  // set up the AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: const Text("Waring"),
+    content: const Text("You need to leave one at min."),
+    actions: [
+      okButton,
+    ],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
 }

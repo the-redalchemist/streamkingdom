@@ -90,7 +90,7 @@ class tmdb_call {
       final List<Tile> tileList = [];
       List<Map<String, dynamic>>? Tile_Img;
       String? imageUrl;
-      List<String> allSers = await database.getAllSeriesTitles();
+      //List<String> allSers = await database.getAllSeriesTitles();
       final fuse = Fuzzy<Serie>(
         await database.getAllSeriesTitles() as List<String>,
         options: FuzzyOptions(
@@ -138,7 +138,7 @@ class tmdb_call {
         }
         // print("blabla $test");
         if (test == null) {
-          final result = await fuse.search(getFirstWords(e['name'], 1));
+          final result = await fuse.search(firstWordWithoutThe(e['name']));
           // final result = extractTop(
           //   query: getFirstWords(e['name'], 1),
           //   limit: 1,
@@ -226,7 +226,7 @@ class tmdb_call {
           }
         }
         if (test == null) {
-          final result = await fuse.search(getFirstWords(e['name'], 1));
+          final result = await fuse.search(firstWordWithoutThe(e['name']));
           if (result.isEmpty) {
             test = null;
           } else {
@@ -259,8 +259,34 @@ class tmdb_call {
     }
   }
 
+  String firstWordWithoutThe(String bigsentence) {
+    if (!equalsIgnoreCase(getFirstWords(bigsentence, 1), "The")) {
+      return getFirstWords(bigsentence, 1);
+    }
+
+    int startindex = 0;
+    int indexofspace = 0;
+
+    for (int i = 0; i < 2; i++) {
+      indexofspace = bigsentence.indexOf(' ', startindex);
+      if (indexofspace == -1) {
+        //-1 is when character is not found
+        return bigsentence;
+      }
+      startindex = indexofspace + 1;
+    }
+
+    return bigsentence
+        .substring(4, indexofspace)
+        .replaceAll(RegExp(r'[^\w\s]+'), '');
+  }
+
   String getFirstWords(String sentence, int wordCounts) {
     return sentence.split(" ").sublist(0, wordCounts).join(" ");
+  }
+
+  bool equalsIgnoreCase(String? string1, String? string2) {
+    return string1?.toLowerCase() == string2?.toLowerCase();
   }
 
   Future<void> getAllSeriesFromBSto({database}) async {

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +7,7 @@ import 'package:streamkingdom/services/SharedPrefsService.dart';
 import 'package:streamkingdom/services/drift_database.dart';
 import 'screens/screens.dart';
 import 'package:streamkingdom/api/tmdb_calls.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'languages/locale_constant.dart';
 import 'languages/localizations_delegate.dart';
@@ -15,18 +15,26 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 //void main() => runApp(const MaterialApp(home: WebScraperApp(), debugShowCheckedModeBanner: false));
 
-void main() {
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ChangeNotifierProvider(create: (_) => AppBarCubit()),
-      Provider<MyDatabase>(
-        create: (context) => MyDatabase(), //this makes the singleton database
-        dispose: (context, MyDatabase db) => db.close(),
-      ),
-    ],
-    child: MyApp(),
-  ));
+Future<void> main() async{
+  await SentryFlutter.init(
+        (options) {
+      options.dsn = 'https://f4968657a848555b6ca4076f21c5a21c@o4505990744244224.ingest.sentry.io/4505990747717632';
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+      // We recommend adjusting this value in production.
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AppBarCubit()),
+        Provider<MyDatabase>(
+          create: (context) => MyDatabase(), //this makes the singleton database
+          dispose: (context, MyDatabase db) => db.close(),
+        ),
+      ],
+      child: MyApp(),
+    )),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -59,8 +67,6 @@ class _MyAppState extends State<MyApp> {
   late final Future getTest;
 
   // late Future<List<dynamic>> getOrderListActives;
-
-  int dummy = 0;
 
   /// 1) our themeMode "state" field
   ThemeMode _themeMode = ThemeMode.system;

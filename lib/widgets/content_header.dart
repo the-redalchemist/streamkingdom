@@ -156,7 +156,7 @@ class _ContentHeaderMobileState extends State<_ContentHeaderMobile> {
                 VerticalIconButton(
                   icon: Icons.info_outline,
                   title: 'Info',
-                  onTap: () => log('Info'),
+                  onTap: () => throw StateError("This is a Dart test exception error."),
                 )
               ],
             ),
@@ -329,7 +329,7 @@ class _ContentHeaderDesktopState extends State<_ContentHeaderDesktop> {
                           const EdgeInsets.fromLTRB(25, 10, 30, 10),
                         ),
                       ),
-                      onPressed: () => log('More Info'),
+                      onPressed: () => throw StateError("This is a Dart exception error."),
                       icon: const Icon(
                         Icons.info_outline,
                         size: 30,

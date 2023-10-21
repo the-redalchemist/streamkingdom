@@ -63,6 +63,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   drag_and_drop_lists: ^0.3.3
+  sentry: ^7.10.1
+  sentry_flutter: ^7.10.1
 
 
 dev_dependencies:

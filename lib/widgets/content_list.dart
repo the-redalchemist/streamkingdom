@@ -49,7 +49,8 @@ class ContentList extends StatelessWidget {
                       (BuildContext context, int index, int realIndex) {
                     final Tile? tile = tileList?[index];
                     return GestureDetector(
-                      onTap: () => log("${tile!.name} / ${tile.url}"),
+                      onTap: () => log(
+                          "${tile!.name} / ${tile.url}"),
                       child: FadeInImage.memoryNetwork(
                         // height: 600,
                         // width: 400,
@@ -65,13 +66,13 @@ class ContentList extends StatelessWidget {
                             ),
                             Center(
                                 child: Text(
-                                  tile!.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                )),
+                              tile!.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )),
                           ]); //this is what will fill the Container in case error happened
                         },
                         placeholder: kTransparentImage,
