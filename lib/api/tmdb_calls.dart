@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:fuzzysearch/fuzzysearch.dart';
@@ -10,40 +11,75 @@ import 'package:streamkingdom/services/drift_database.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 import '../services/SharedPrefsService.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class tmdb_call {
   final endpoint = 'https://api.themoviedb.org/3';
   final apiKey = '5afee2c6583b6622dc0ebeb09f463bc7';
   final webScraper2 = WebScraper('https://bs.to');
   bool seriesSyncComp = false;
-  bool popularSyncComp = false;
+  bool listSyncComplete = false;
+  List<String>? orderListActives;
 
   Future<List<dynamic>> getOrderListActives({database}) async {
+    Stopwatch stopwatch = Stopwatch()
+      ..start();
     List<dynamic> returnList = [];
     SavePreference pre = SavePreference();
-    List<String>? orderListActives = await pre.getOrderListActive();
-    // print("Baum");
+    orderListActives = await pre.getOrderListActive();
     print(orderListActives);
     if (orderListActives == null) {
       orderListActives = [];
-      orderListActives.add("Popular");
-      orderListActives.add("TrendingDay");
-      orderListActives.add("TrendingWeek");
-      pre.setOrderListActive(orderListActives);
+      orderListActives?.add("Popular");
+      orderListActives?.add("TrendingDay");
+      orderListActives?.add("TrendingWeek");
+      pre.setOrderListActive(orderListActives!);
     }
-    for (var element in orderListActives) {
+
+    Future getTrendingFutureDay;
+    Future getTrendingFutureWeek;
+    Future getPopularsFuture;
+    List<Future> futureList = [];
+    for (var element in orderListActives!) {
       switch (element) {
         case "Popular":
-          returnList.add({'title': "Popular", 'value': await getPopular(database: database)});
+          getPopularsFuture = getPopular(database: database);
+          futureList.add(getPopularsFuture);
+          //returnList.add({'title': "Popular", 'value': getPopular(database: database)});
           break;
         case "TrendingDay":
-          returnList.add({'title': "Trending day", 'value': await getTrending(database: database)});
+          getTrendingFutureDay = getTrending(database: database);
+          futureList.add(getTrendingFutureDay);
+          //returnList.add({'title': "Trending day", 'value': getTrending(database: database)});
           break;
         case "TrendingWeek":
-          returnList.add({'title': "Trending week", 'value': await getTrending(time: "week", database: database)});
+          getTrendingFutureWeek = getTrending(time: "week", database: database);
+          futureList.add(getTrendingFutureWeek);
+          //returnList.add({'title': "Trending week", 'value': getTrending(time: "week", database: database)});
           break;
       }
     }
+    await Future
+        .wait(futureList)
+        .then((List responses) {
+          print("then wurde erreicht");
+          for (int i = 0; i < orderListActives!.length; i++) {
+            returnList.add({'title': orderListActives?[i], 'value': responses[i]});
+          }
+    });
+
+    print(
+        "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch
+            .elapsed} to sync all Lists");
+    Fluttertoast.showToast(
+        msg: "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch.elapsed} to sync all Lists",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
     return returnList;
   }
 
@@ -53,9 +89,10 @@ class tmdb_call {
       print("already have header data");
       return await database.getHeader();
     } else {
-      await waitWhile(() => popularSyncComp);
-      print("checkpoint");
-      PopularContent tile = await database.getRandomPopular();
+      await waitWhile(() => listSyncComplete);
+      Random random = Random();
+      int randomNumber1 = random.nextInt(orderListActives!.length);
+      ListContent tile = await database.getRandomTile(orderListActives![randomNumber1]);
       List<Map<String, dynamic>>? Tile_desc;
       if (await webScraper2.loadWebPage("/${tile.url}")) {
         Tile_desc = webScraper2.getElement('div#sp_left > p', ['']);
@@ -67,7 +104,7 @@ class tmdb_call {
           imageUrl: tile.imageUrl!,
           url: tile.url,
           description: (Tile_desc?[0]['title'] ?? "Lorem ipsum"),
-      posterUrl: tile.backdropPath!);
+          posterUrl: tile.backdropPath!);
 
       return await database.addHeader(header);
     }
@@ -79,15 +116,18 @@ class tmdb_call {
     String Day_Week = time == "day" ? "trendingDays" : "trendingWeeks";
     if (await database.checkForLastSync(Day_Week)) {
       print("already have trending $time");
+      listSyncComplete = true;
       if (time == "day") {
         return await database.getApiCallsFromDb("trendingDays");
       } else {
         return await database.getApiCallsFromDb("trendingWeeks");
       }
     } else {
-      Stopwatch stopwatch = Stopwatch()..start();
+      Stopwatch stopwatch = Stopwatch()
+        ..start();
       // MyDatabase database2 = MyDatabase();
       final List<Tile> tileList = [];
+      final List<ListContent> trendingList = [];
       List<Map<String, dynamic>>? Tile_Img;
       String? imageUrl;
       //List<String> allSers = await database.getAllSeriesTitles();
@@ -108,7 +148,7 @@ class tmdb_call {
       var body = jsonDecode(result.body);
       // print(body);
       for (var e
-          in List.castFrom<dynamic, Map<String, dynamic>>(body['results'])) {
+      in List.castFrom<dynamic, Map<String, dynamic>>(body['results'])) {
         // print("trending test ${e['name']}");
         // String? test =
         //     await database.getUrl(e['name']) ?? "serie/Parallel-Worlds-Parallels";
@@ -116,6 +156,7 @@ class tmdb_call {
         // if(e['name'] == "Twisted Metal") {
         //   test = "serie/Twisted";
         // }
+        String backdrop_path = "https://image.tmdb.org/t/p/original${e['backdrop_path']}";
         if (test == null) {
           // e['name'].runes.forEach((int rune) {
           //
@@ -157,22 +198,32 @@ class tmdb_call {
           if (await webScraper2.loadWebPage("/$test")) {
             Tile_Img = webScraper2.getElement('div#sp_right > img', ['src']);
             imageUrl = "https://bs.to" + Tile_Img[0]["attributes"]["src"];
-            print("Trending $time, Ergebniss: $Tile_Img / Name: ${e['name']} / Url: $test");
+            print(
+                "Trending $time, Ergebniss: $Tile_Img / Name: ${e['name']} / Url: $test");
           }
           // print(e);
           Tile tile = Tile(name: e["name"], url: test, imageUrl: imageUrl);
+          ListContent trending = ListContent(name: e["name"],
+              url: test,
+              imageUrl: imageUrl,
+              backdropPath: backdrop_path);
+          trendingList.add(trending);
           tileList.add(tile);
         }
       }
       // database.close();
       if (time == 'week') {
-        database.addTrendingWeek(tileList);
+        //database.addTrendingWeek(tileList);
+        await database.addTrendingWeek(trendingList);
       } else if (time == 'day') {
-        database.addTrendingDay(tileList);
+        await database.addTrendingDay(trendingList);
+        //database.addTrendingDay(tileList);
       }
       stopwatch.stop();
       print(
-          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch.elapsed} to sync trending $time");
+          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch
+              .elapsed} to sync trending $time");
+      listSyncComplete = true;
       return tileList;
     }
   }
@@ -180,16 +231,18 @@ class tmdb_call {
   Future<List<Tile>> getPopular(
       {lang = 'de-DE', region = 'CH', database}) async {
     await waitWhile(() => seriesSyncComp);
-    popularSyncComp = false;
+    //print("getPopular was called");
+    //listSyncComplete = false;
     if (await database.checkForLastSync("popular")) {
       print("already have populars");
-      popularSyncComp = true;
+      listSyncComplete = true;
       return await database.getApiCallsFromDb("popular");
     } else {
-      Stopwatch stopwatch = Stopwatch()..start();
+      Stopwatch stopwatch = Stopwatch()
+        ..start();
       // MyDatabase database2 = MyDatabase();
       final List<Tile> tileList = [];
-      final List<PopularContent> popularList = [];
+      final List<ListContent> popularList = [];
       List<Map<String, dynamic>>? Tile_Img;
       String? imageUrl;
       final fuse = Fuzzy<Serie>(
@@ -209,7 +262,7 @@ class tmdb_call {
       var body = jsonDecode(result.body);
       // print(body);
       for (var e
-          in List.castFrom<dynamic, Map<String, dynamic>>(body['results'])) {
+      in List.castFrom<dynamic, Map<String, dynamic>>(body['results'])) {
         // String? test =
         //     await database.getUrl(e['name']) ?? "serie/Parallel-Worlds-Parallels";
         String? test = await database.getUrl(e['name']);
@@ -240,11 +293,15 @@ class tmdb_call {
           if (await webScraper2.loadWebPage("/$test")) {
             Tile_Img = webScraper2.getElement('div#sp_right > img', ['src']);
             imageUrl = "https://bs.to" + Tile_Img[0]["attributes"]["src"];
-            print("Popular Ergebniss: $Tile_Img / Name: ${e['name']} / Url: $test");
+            print(
+                "Popular Ergebniss: $Tile_Img / Name: ${e['name']} / Url: $test");
           }
           // print(e);
           Tile tile = Tile(name: e["name"], url: test, imageUrl: imageUrl);
-          PopularContent popular = PopularContent(name: e["name"], url: test, imageUrl: imageUrl, backdropPath: backdrop_path);
+          ListContent popular = ListContent(name: e["name"],
+              url: test,
+              imageUrl: imageUrl,
+              backdropPath: backdrop_path);
           popularList.add(popular);
           tileList.add(tile);
         }
@@ -253,8 +310,9 @@ class tmdb_call {
       // database.close();
       stopwatch.stop();
       print(
-          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch.elapsed} to sync most popular");
-      popularSyncComp = true;
+          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch
+              .elapsed} to sync most popular");
+      listSyncComplete = true;
       return tileList;
     }
   }
@@ -295,7 +353,8 @@ class tmdb_call {
       seriesSyncComp = true;
     } else {
       seriesSyncComp = false;
-      Stopwatch stopwatch = Stopwatch()..start();
+      Stopwatch stopwatch = Stopwatch()
+        ..start();
       List<Map<String, dynamic>>? seriesList;
       if (await webScraper2.loadWebPage('/andere-serien')) {
         seriesList = webScraper2.getElement(
@@ -305,7 +364,8 @@ class tmdb_call {
       await database.addSeries(seriesList!);
       stopwatch.stop();
       print(
-          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch.elapsed} to sync all series");
+          "It took ${stopwatch.elapsedMilliseconds} ms / ${stopwatch
+              .elapsed} to sync all series");
       seriesSyncComp = true;
     }
   }
@@ -331,7 +391,7 @@ class tmdb_call {
 
     final bool? repeat = prefs.getBool('darkMode');
 
-    if(repeat != null) {
+    if (repeat != null) {
       return repeat;
     } else {
       await prefs.setBool('darkMode', true);

@@ -8,6 +8,8 @@ import 'dart:math';
 
 part 'drift_database.g.dart';
 
+//Run "dart run build_runner build" if tables get adjusted.
+
 class Series extends Table {
   IntColumn get id => integer().autoIncrement()();
 
@@ -43,6 +45,8 @@ class TrendingDays extends Table {
 
   TextColumn get imgLink => text()();
 
+  TextColumn get backdropUrl => text()();
+
 //@override
 //Set<Column> get primaryKey => {id, title};
 }
@@ -55,6 +59,8 @@ class TrendingWeeks extends Table {
   TextColumn get link => text()();
 
   TextColumn get imgLink => text()();
+
+  TextColumn get backdropUrl => text()();
 
 //@override
 //Set<Column> get primaryKey => {id, title};
@@ -185,7 +191,7 @@ class MyDatabase extends _$MyDatabase {
     return null;
   }
 
-  Future<void> addPopular(List<PopularContent> tileList) async {
+  Future<void> addPopular(List<ListContent> tileList) async {
     await delete(populars).go();
     await customStatement("DELETE FROM sqlite_sequence WHERE NAME='populars'");
     await batch((batch) {
@@ -202,7 +208,7 @@ class MyDatabase extends _$MyDatabase {
     await addApiCallTime("popular");
   }
 
-  Future<void> addTrendingDay(List<Tile> tileList) async {
+  Future<void> addTrendingDay(List<ListContent> tileList) async {
     await delete(trendingDays).go();
     await customStatement(
         "DELETE FROM sqlite_sequence WHERE NAME='trendingDays'");
@@ -213,13 +219,14 @@ class MyDatabase extends _$MyDatabase {
             TrendingDaysCompanion.insert(
                 title: element.name,
                 link: element.url!,
-                imgLink: element.imageUrl!));
+                imgLink: element.imageUrl!,
+                backdropUrl: element.backdropPath!));
       }
     });
     await addApiCallTime("trendingDays");
   }
 
-  Future<void> addTrendingWeek(List<Tile> tileList) async {
+  Future<void> addTrendingWeek(List<ListContent> tileList) async {
     await delete(trendingWeeks).go();
     await customStatement(
         "DELETE FROM sqlite_sequence WHERE NAME='trendingWeeks'");
@@ -230,7 +237,8 @@ class MyDatabase extends _$MyDatabase {
             TrendingWeeksCompanion.insert(
                 title: element.name,
                 link: element.url!,
-                imgLink: element.imageUrl!));
+                imgLink: element.imageUrl!,
+                backdropUrl: element.backdropPath!));
       }
     });
     await addApiCallTime("trendingWeeks");
@@ -380,19 +388,58 @@ class MyDatabase extends _$MyDatabase {
     return tileList;
   }
 
-  Future<PopularContent> getRandomPopular() async {
-    final List<PopularContent> tileList = [];
-    var countExp = populars.id.count();
-    final query = selectOnly(populars)..addColumns([countExp]);
-    var result = await query.map((row) => row.read(countExp)).getSingle();
-    Random random = Random();
-    int randomNumber1 = random.nextInt(result! + 1);
-    final dynamic maps = await (select(populars)
+  Future<ListContent> getRandomTile(String listName) async {
+    final List<ListContent> tileList = [];
+    switch (listName) {
+      case "Popular":
+        var countExp = populars.id.count();
+        final query = selectOnly(populars)..addColumns([countExp]);
+        var result = await query.map((row) => row.read(countExp)).getSingle();
+        Random random = Random();
+        int randomNumber1 = random.nextInt(result! + 1);
+        final dynamic maps = await (select(populars)
           ..where((t) => t.id.equals(randomNumber1)))
-        .getSingle();
-    print("Baum" + maps.title);
-    PopularContent tile = PopularContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
-    tileList.add(tile);
+            .getSingle();
+        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        tileList.add(tile);
+        break;
+      case "TrendingDay":
+        var countExp = trendingDays.id.count();
+        final query = selectOnly(trendingDays)..addColumns([countExp]);
+        var result = await query.map((row) => row.read(countExp)).getSingle();
+        Random random = Random();
+        int randomNumber1 = random.nextInt(result! + 1);
+        final dynamic maps = await (select(trendingDays)
+          ..where((t) => t.id.equals(randomNumber1)))
+            .getSingle();
+        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        tileList.add(tile);
+        break;
+      case "TrendingWeek":
+        var countExp = trendingWeeks.id.count();
+        final query = selectOnly(trendingWeeks)..addColumns([countExp]);
+        var result = await query.map((row) => row.read(countExp)).getSingle();
+        Random random = Random();
+        int randomNumber1 = random.nextInt(result! + 1);
+        final dynamic maps = await (select(trendingWeeks)
+          ..where((t) => t.id.equals(randomNumber1)))
+            .getSingle();
+        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        tileList.add(tile);
+        break;
+      default:
+        var countExp = populars.id.count();
+        final query = selectOnly(populars)..addColumns([countExp]);
+        var result = await query.map((row) => row.read(countExp)).getSingle();
+        Random random = Random();
+        int randomNumber1 = random.nextInt(result! + 1);
+        final dynamic maps = await (select(populars)
+          ..where((t) => t.id.equals(randomNumber1)))
+            .getSingle();
+        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        tileList.add(tile);
+        break;
+    }
     return tileList[0];
   }
 }

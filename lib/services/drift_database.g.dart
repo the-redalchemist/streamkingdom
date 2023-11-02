@@ -30,9 +30,10 @@ class $SeriesTable extends Series with TableInfo<$SeriesTable, Serie> {
   @override
   List<GeneratedColumn> get $columns => [id, title, link];
   @override
-  String get aliasedName => _alias ?? 'series';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'series';
+  String get actualTableName => $name;
+  static const String $name = 'series';
   @override
   VerificationContext validateIntegrity(Insertable<Serie> instance,
       {bool isInserting = false}) {
@@ -245,9 +246,10 @@ class $PopularsTable extends Populars with TableInfo<$PopularsTable, Popular> {
   @override
   List<GeneratedColumn> get $columns => [id, title, link, imgLink, backdropUrl];
   @override
-  String get aliasedName => _alias ?? 'populars';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'populars';
+  String get actualTableName => $name;
+  static const String $name = 'populars';
   @override
   VerificationContext validateIntegrity(Insertable<Popular> instance,
       {bool isInserting = false}) {
@@ -523,12 +525,19 @@ class $TrendingDaysTable extends TrendingDays
   late final GeneratedColumn<String> imgLink = GeneratedColumn<String>(
       'img_link', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _backdropUrlMeta =
+      const VerificationMeta('backdropUrl');
   @override
-  List<GeneratedColumn> get $columns => [id, title, link, imgLink];
+  late final GeneratedColumn<String> backdropUrl = GeneratedColumn<String>(
+      'backdrop_url', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
-  String get aliasedName => _alias ?? 'trending_days';
+  List<GeneratedColumn> get $columns => [id, title, link, imgLink, backdropUrl];
   @override
-  String get actualTableName => 'trending_days';
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trending_days';
   @override
   VerificationContext validateIntegrity(Insertable<TrendingDay> instance,
       {bool isInserting = false}) {
@@ -555,6 +564,14 @@ class $TrendingDaysTable extends TrendingDays
     } else if (isInserting) {
       context.missing(_imgLinkMeta);
     }
+    if (data.containsKey('backdrop_url')) {
+      context.handle(
+          _backdropUrlMeta,
+          backdropUrl.isAcceptableOrUnknown(
+              data['backdrop_url']!, _backdropUrlMeta));
+    } else if (isInserting) {
+      context.missing(_backdropUrlMeta);
+    }
     return context;
   }
 
@@ -572,6 +589,8 @@ class $TrendingDaysTable extends TrendingDays
           .read(DriftSqlType.string, data['${effectivePrefix}link'])!,
       imgLink: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}img_link'])!,
+      backdropUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}backdrop_url'])!,
     );
   }
 
@@ -586,11 +605,13 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
   final String title;
   final String link;
   final String imgLink;
+  final String backdropUrl;
   const TrendingDay(
       {required this.id,
       required this.title,
       required this.link,
-      required this.imgLink});
+      required this.imgLink,
+      required this.backdropUrl});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -598,6 +619,7 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
     map['title'] = Variable<String>(title);
     map['link'] = Variable<String>(link);
     map['img_link'] = Variable<String>(imgLink);
+    map['backdrop_url'] = Variable<String>(backdropUrl);
     return map;
   }
 
@@ -607,6 +629,7 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
       title: Value(title),
       link: Value(link),
       imgLink: Value(imgLink),
+      backdropUrl: Value(backdropUrl),
     );
   }
 
@@ -618,6 +641,7 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
       title: serializer.fromJson<String>(json['title']),
       link: serializer.fromJson<String>(json['link']),
       imgLink: serializer.fromJson<String>(json['imgLink']),
+      backdropUrl: serializer.fromJson<String>(json['backdropUrl']),
     );
   }
   @override
@@ -628,16 +652,22 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
       'title': serializer.toJson<String>(title),
       'link': serializer.toJson<String>(link),
       'imgLink': serializer.toJson<String>(imgLink),
+      'backdropUrl': serializer.toJson<String>(backdropUrl),
     };
   }
 
   TrendingDay copyWith(
-          {int? id, String? title, String? link, String? imgLink}) =>
+          {int? id,
+          String? title,
+          String? link,
+          String? imgLink,
+          String? backdropUrl}) =>
       TrendingDay(
         id: id ?? this.id,
         title: title ?? this.title,
         link: link ?? this.link,
         imgLink: imgLink ?? this.imgLink,
+        backdropUrl: backdropUrl ?? this.backdropUrl,
       );
   @override
   String toString() {
@@ -645,13 +675,14 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('link: $link, ')
-          ..write('imgLink: $imgLink')
+          ..write('imgLink: $imgLink, ')
+          ..write('backdropUrl: $backdropUrl')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, link, imgLink);
+  int get hashCode => Object.hash(id, title, link, imgLink, backdropUrl);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -659,7 +690,8 @@ class TrendingDay extends DataClass implements Insertable<TrendingDay> {
           other.id == this.id &&
           other.title == this.title &&
           other.link == this.link &&
-          other.imgLink == this.imgLink);
+          other.imgLink == this.imgLink &&
+          other.backdropUrl == this.backdropUrl);
 }
 
 class TrendingDaysCompanion extends UpdateCompanion<TrendingDay> {
@@ -667,31 +699,37 @@ class TrendingDaysCompanion extends UpdateCompanion<TrendingDay> {
   final Value<String> title;
   final Value<String> link;
   final Value<String> imgLink;
+  final Value<String> backdropUrl;
   const TrendingDaysCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.link = const Value.absent(),
     this.imgLink = const Value.absent(),
+    this.backdropUrl = const Value.absent(),
   });
   TrendingDaysCompanion.insert({
     this.id = const Value.absent(),
     required String title,
     required String link,
     required String imgLink,
+    required String backdropUrl,
   })  : title = Value(title),
         link = Value(link),
-        imgLink = Value(imgLink);
+        imgLink = Value(imgLink),
+        backdropUrl = Value(backdropUrl);
   static Insertable<TrendingDay> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? link,
     Expression<String>? imgLink,
+    Expression<String>? backdropUrl,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
       if (link != null) 'link': link,
       if (imgLink != null) 'img_link': imgLink,
+      if (backdropUrl != null) 'backdrop_url': backdropUrl,
     });
   }
 
@@ -699,12 +737,14 @@ class TrendingDaysCompanion extends UpdateCompanion<TrendingDay> {
       {Value<int>? id,
       Value<String>? title,
       Value<String>? link,
-      Value<String>? imgLink}) {
+      Value<String>? imgLink,
+      Value<String>? backdropUrl}) {
     return TrendingDaysCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       link: link ?? this.link,
       imgLink: imgLink ?? this.imgLink,
+      backdropUrl: backdropUrl ?? this.backdropUrl,
     );
   }
 
@@ -723,6 +763,9 @@ class TrendingDaysCompanion extends UpdateCompanion<TrendingDay> {
     if (imgLink.present) {
       map['img_link'] = Variable<String>(imgLink.value);
     }
+    if (backdropUrl.present) {
+      map['backdrop_url'] = Variable<String>(backdropUrl.value);
+    }
     return map;
   }
 
@@ -732,7 +775,8 @@ class TrendingDaysCompanion extends UpdateCompanion<TrendingDay> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('link: $link, ')
-          ..write('imgLink: $imgLink')
+          ..write('imgLink: $imgLink, ')
+          ..write('backdropUrl: $backdropUrl')
           ..write(')'))
         .toString();
   }
@@ -769,12 +813,19 @@ class $TrendingWeeksTable extends TrendingWeeks
   late final GeneratedColumn<String> imgLink = GeneratedColumn<String>(
       'img_link', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _backdropUrlMeta =
+      const VerificationMeta('backdropUrl');
   @override
-  List<GeneratedColumn> get $columns => [id, title, link, imgLink];
+  late final GeneratedColumn<String> backdropUrl = GeneratedColumn<String>(
+      'backdrop_url', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
-  String get aliasedName => _alias ?? 'trending_weeks';
+  List<GeneratedColumn> get $columns => [id, title, link, imgLink, backdropUrl];
   @override
-  String get actualTableName => 'trending_weeks';
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trending_weeks';
   @override
   VerificationContext validateIntegrity(Insertable<TrendingWeek> instance,
       {bool isInserting = false}) {
@@ -801,6 +852,14 @@ class $TrendingWeeksTable extends TrendingWeeks
     } else if (isInserting) {
       context.missing(_imgLinkMeta);
     }
+    if (data.containsKey('backdrop_url')) {
+      context.handle(
+          _backdropUrlMeta,
+          backdropUrl.isAcceptableOrUnknown(
+              data['backdrop_url']!, _backdropUrlMeta));
+    } else if (isInserting) {
+      context.missing(_backdropUrlMeta);
+    }
     return context;
   }
 
@@ -818,6 +877,8 @@ class $TrendingWeeksTable extends TrendingWeeks
           .read(DriftSqlType.string, data['${effectivePrefix}link'])!,
       imgLink: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}img_link'])!,
+      backdropUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}backdrop_url'])!,
     );
   }
 
@@ -832,11 +893,13 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
   final String title;
   final String link;
   final String imgLink;
+  final String backdropUrl;
   const TrendingWeek(
       {required this.id,
       required this.title,
       required this.link,
-      required this.imgLink});
+      required this.imgLink,
+      required this.backdropUrl});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -844,6 +907,7 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
     map['title'] = Variable<String>(title);
     map['link'] = Variable<String>(link);
     map['img_link'] = Variable<String>(imgLink);
+    map['backdrop_url'] = Variable<String>(backdropUrl);
     return map;
   }
 
@@ -853,6 +917,7 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
       title: Value(title),
       link: Value(link),
       imgLink: Value(imgLink),
+      backdropUrl: Value(backdropUrl),
     );
   }
 
@@ -864,6 +929,7 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
       title: serializer.fromJson<String>(json['title']),
       link: serializer.fromJson<String>(json['link']),
       imgLink: serializer.fromJson<String>(json['imgLink']),
+      backdropUrl: serializer.fromJson<String>(json['backdropUrl']),
     );
   }
   @override
@@ -874,16 +940,22 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
       'title': serializer.toJson<String>(title),
       'link': serializer.toJson<String>(link),
       'imgLink': serializer.toJson<String>(imgLink),
+      'backdropUrl': serializer.toJson<String>(backdropUrl),
     };
   }
 
   TrendingWeek copyWith(
-          {int? id, String? title, String? link, String? imgLink}) =>
+          {int? id,
+          String? title,
+          String? link,
+          String? imgLink,
+          String? backdropUrl}) =>
       TrendingWeek(
         id: id ?? this.id,
         title: title ?? this.title,
         link: link ?? this.link,
         imgLink: imgLink ?? this.imgLink,
+        backdropUrl: backdropUrl ?? this.backdropUrl,
       );
   @override
   String toString() {
@@ -891,13 +963,14 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('link: $link, ')
-          ..write('imgLink: $imgLink')
+          ..write('imgLink: $imgLink, ')
+          ..write('backdropUrl: $backdropUrl')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, link, imgLink);
+  int get hashCode => Object.hash(id, title, link, imgLink, backdropUrl);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -905,7 +978,8 @@ class TrendingWeek extends DataClass implements Insertable<TrendingWeek> {
           other.id == this.id &&
           other.title == this.title &&
           other.link == this.link &&
-          other.imgLink == this.imgLink);
+          other.imgLink == this.imgLink &&
+          other.backdropUrl == this.backdropUrl);
 }
 
 class TrendingWeeksCompanion extends UpdateCompanion<TrendingWeek> {
@@ -913,31 +987,37 @@ class TrendingWeeksCompanion extends UpdateCompanion<TrendingWeek> {
   final Value<String> title;
   final Value<String> link;
   final Value<String> imgLink;
+  final Value<String> backdropUrl;
   const TrendingWeeksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.link = const Value.absent(),
     this.imgLink = const Value.absent(),
+    this.backdropUrl = const Value.absent(),
   });
   TrendingWeeksCompanion.insert({
     this.id = const Value.absent(),
     required String title,
     required String link,
     required String imgLink,
+    required String backdropUrl,
   })  : title = Value(title),
         link = Value(link),
-        imgLink = Value(imgLink);
+        imgLink = Value(imgLink),
+        backdropUrl = Value(backdropUrl);
   static Insertable<TrendingWeek> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? link,
     Expression<String>? imgLink,
+    Expression<String>? backdropUrl,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
       if (link != null) 'link': link,
       if (imgLink != null) 'img_link': imgLink,
+      if (backdropUrl != null) 'backdrop_url': backdropUrl,
     });
   }
 
@@ -945,12 +1025,14 @@ class TrendingWeeksCompanion extends UpdateCompanion<TrendingWeek> {
       {Value<int>? id,
       Value<String>? title,
       Value<String>? link,
-      Value<String>? imgLink}) {
+      Value<String>? imgLink,
+      Value<String>? backdropUrl}) {
     return TrendingWeeksCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       link: link ?? this.link,
       imgLink: imgLink ?? this.imgLink,
+      backdropUrl: backdropUrl ?? this.backdropUrl,
     );
   }
 
@@ -969,6 +1051,9 @@ class TrendingWeeksCompanion extends UpdateCompanion<TrendingWeek> {
     if (imgLink.present) {
       map['img_link'] = Variable<String>(imgLink.value);
     }
+    if (backdropUrl.present) {
+      map['backdrop_url'] = Variable<String>(backdropUrl.value);
+    }
     return map;
   }
 
@@ -978,7 +1063,8 @@ class TrendingWeeksCompanion extends UpdateCompanion<TrendingWeek> {
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('link: $link, ')
-          ..write('imgLink: $imgLink')
+          ..write('imgLink: $imgLink, ')
+          ..write('backdropUrl: $backdropUrl')
           ..write(')'))
         .toString();
   }
@@ -1014,9 +1100,10 @@ class $LastSyncedTable extends LastSynced
   @override
   List<GeneratedColumn> get $columns => [id, kind, time];
   @override
-  String get aliasedName => _alias ?? 'last_synced';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'last_synced';
+  String get actualTableName => $name;
+  static const String $name = 'last_synced';
   @override
   VerificationContext validateIntegrity(Insertable<LastSyncedData> instance,
       {bool isInserting = false}) {
@@ -1238,9 +1325,10 @@ class $HeadersTable extends Headers with TableInfo<$HeadersTable, Header> {
   List<GeneratedColumn> get $columns =>
       [id, title, imgLink, description, url, backdropUrl];
   @override
-  String get aliasedName => _alias ?? 'headers';
+  String get aliasedName => _alias ?? actualTableName;
   @override
-  String get actualTableName => 'headers';
+  String get actualTableName => $name;
+  static const String $name = 'headers';
   @override
   VerificationContext validateIntegrity(Insertable<Header> instance,
       {bool isInserting = false}) {

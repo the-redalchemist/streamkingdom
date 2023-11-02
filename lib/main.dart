@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,10 +16,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 //void main() => runApp(const MaterialApp(home: WebScraperApp(), debugShowCheckedModeBanner: false));
 
-Future<void> main() async{
+Future<void> main() async {
   await SentryFlutter.init(
-        (options) {
-      options.dsn = 'https://f4968657a848555b6ca4076f21c5a21c@o4505990744244224.ingest.sentry.io/4505990747717632';
+    (options) {
+      options.dsn =
+          'https://f4968657a848555b6ca4076f21c5a21c@o4505990744244224.ingest.sentry.io/4505990747717632';
       // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
       // We recommend adjusting this value in production.
       options.tracesSampleRate = 1.0;
@@ -28,7 +30,8 @@ Future<void> main() async{
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AppBarCubit()),
         Provider<MyDatabase>(
-          create: (context) => MyDatabase(), //this makes the singleton database
+          create: (context) => MyDatabase(),
+          //this makes the singleton database
           dispose: (context, MyDatabase db) => db.close(),
         ),
       ],
@@ -38,7 +41,7 @@ Future<void> main() async{
 }
 
 class MyApp extends StatefulWidget {
-  MyApp({Key? key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -95,12 +98,12 @@ class _MyAppState extends State<MyApp> {
 
     getAllSeriesFromBStoFuture = apiCall.getAllSeriesFromBSto(
         database: Provider.of<MyDatabase>(context));
-    getTrendingFutureDay =
+    /*getTrendingFutureDay =
         apiCall.getTrending(database: Provider.of<MyDatabase>(context));
     getTrendingFutureWeek = apiCall.getTrending(
         time: 'week', database: Provider.of<MyDatabase>(context));
     getPopularsFuture =
-        apiCall.getPopular(database: Provider.of<MyDatabase>(context));
+        apiCall.getPopular(database: Provider.of<MyDatabase>(context));*/
     getHeaderDataFuture =
         apiCall.getHeaderData(database: Provider.of<MyDatabase>(context));
 
@@ -124,17 +127,29 @@ class _MyAppState extends State<MyApp> {
           // getTrendingFutureWeek,
           // getPopularsFuture,
           getHeaderDataFuture,
-          apiCall.getOrderListActives(database: Provider.of<MyDatabase>(context)),
+          getTest,
+          //apiCall.getOrderListActives(database: Provider.of<MyDatabase>(context)),
         ]),
         builder: (context, AsyncSnapshot snapshot) {
           // future: Future<void>.delayed(const Duration(seconds: 2), () {});
           // var snapshot = snapshots.data?[0];
           if (snapshot.hasError) {
             print("Error: $snapshot.error");
+            Fluttertoast.showToast(
+                msg: "Error: $snapshot.error",
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.CENTER,
+                timeInSecForIosWeb: 5,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                fontSize: 16.0);
             return MaterialApp(
               home: Text(
-                'There was an error :(',
-                style: Theme.of(context).textTheme.displayLarge,
+                'There was an error :( ${snapshot.error}',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.normal),
               ),
             );
           } else if (snapshot.connectionState == ConnectionState.done &&
