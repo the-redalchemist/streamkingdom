@@ -55,4 +55,14 @@ class LanguageDe extends Languages {
 
   @override
   String get emptyList => "Nichts hier";
+
+  @override
+  String get warningTitle => "Warnung";
+
+  @override
+  String get warringOrderText => "Lassen Sie bitte mindestens ein Element aktiviert.";
+
+  @override
+  String get ok => "Ok";
+
 }

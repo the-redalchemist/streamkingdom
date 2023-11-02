@@ -312,7 +312,6 @@ class _HomeOrderScreenState extends State<HomeOrderScreen> {
                     MyApp.reloadAll(context);
                     Navigator.of(context).pop();
                   } else {
-                    print("nope its empty");
                     showAlertDialog(context);
                   }
                 },
@@ -451,7 +450,7 @@ class _HomeOrderScreenState extends State<HomeOrderScreen> {
 showAlertDialog(BuildContext context) {
   // set up the button
   Widget okButton = TextButton(
-    child: Text("OK"),
+    child: Text(Languages.of(context)?.ok ?? "OK"),
     onPressed: () {
       Navigator.of(context).pop();
     },
@@ -459,8 +458,8 @@ showAlertDialog(BuildContext context) {
 
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
-    title: const Text("Waring"),
-    content: const Text("You need to leave one at min."),
+    title: Text(Languages.of(context)?.warningTitle ?? "Warning"),
+    content: Text(Languages.of(context)?.warringOrderText ?? "You need to leave one at minimum."),
     actions: [
       okButton,
     ],

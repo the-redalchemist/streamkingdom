@@ -42,4 +42,10 @@ abstract class Languages {
 
   String get emptyList;
 
+  String get warningTitle;
+
+  String get warringOrderText;
+
+  String get ok;
+
 }

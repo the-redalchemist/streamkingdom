@@ -55,4 +55,13 @@ class LanguageEn extends Languages {
 
   @override
   String get emptyList => "Nothing here";
+
+  @override
+  String get warningTitle => "Warning";
+
+  @override
+  String get warringOrderText => "You need to leave one at minimum.";
+
+  @override
+  String get ok => "Ok";
 }
