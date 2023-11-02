@@ -65,6 +65,7 @@ dependencies:
   drag_and_drop_lists: ^0.3.3
   sentry: ^7.10.1
   sentry_flutter: ^7.10.1
+  fluttertoast: ^8.2.2
 
 
 dev_dependencies:

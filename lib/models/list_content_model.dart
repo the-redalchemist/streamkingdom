@@ -1,10 +1,10 @@
-class PopularContent {
+class ListContent {
   final String name;
   final String? url;
   String? imageUrl;
   String? backdropPath;
 
-  PopularContent({
+  ListContent({
     required this.name,
     this.url,
     this.imageUrl,
