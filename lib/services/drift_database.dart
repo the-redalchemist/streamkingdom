@@ -145,7 +145,12 @@ class MyDatabase extends _$MyDatabase {
   Future<HeaderContent> getHeader() async {
     //final database = MyDatabase();
     final Header maps = await select(headers).getSingle();
-    HeaderContent headerContent = HeaderContent(title: maps.title, imageUrl: maps.imgLink, url: maps.url, description: maps.description, posterUrl: maps.backdropUrl);
+    HeaderContent headerContent = HeaderContent(
+        title: maps.title,
+        imageUrl: maps.imgLink,
+        url: maps.url,
+        description: maps.description,
+        posterUrl: maps.backdropUrl);
     return headerContent;
   }
 
@@ -157,7 +162,8 @@ class MyDatabase extends _$MyDatabase {
         title: Value(headerEntity.title),
         imgLink: Value(headerEntity.imageUrl),
         description: Value(headerEntity.description!),
-        url: Value(headerEntity.url!), backdropUrl: Value(headerEntity.posterUrl)));
+        url: Value(headerEntity.url!),
+        backdropUrl: Value(headerEntity.posterUrl)));
     await addApiCallTime("header");
     return headerEntity;
   }
@@ -322,10 +328,13 @@ class MyDatabase extends _$MyDatabase {
     print("test befor maps");
     print("maps: " + maps.isEmpty.toString());
     if (name == "header") {
-      print(DateTime(maps[0]!.year, maps[0]!.month, maps[0]!.day, maps[0]!.hour, maps[0]!.minute));
+      print(DateTime(maps[0]!.year, maps[0]!.month, maps[0]!.day, maps[0]!.hour,
+          maps[0]!.minute));
       print(DateTime(now.year, now.month, now.day, now.hour, now.minute));
-      print(DateTime(maps[0]!.year, maps[0]!.month, maps[0]!.day, maps[0]!.hour, maps[0]!.minute)
-          .difference(DateTime(now.year, now.month, now.day, now.hour, now.minute))
+      print(DateTime(maps[0]!.year, maps[0]!.month, maps[0]!.day, maps[0]!.hour,
+              maps[0]!.minute)
+          .difference(
+              DateTime(now.year, now.month, now.day, now.hour, now.minute))
           .inMinutes);
       if (maps.isEmpty ||
           DateTime(maps[0]!.year, maps[0]!.month, maps[0]!.day, maps[0]!.hour)
@@ -392,55 +401,86 @@ class MyDatabase extends _$MyDatabase {
     final List<ListContent> tileList = [];
     switch (listName) {
       case "Popular":
-        var countExp = populars.id.count();
+        var countExp = populars.id;
         final query = selectOnly(populars)..addColumns([countExp]);
-        var result = await query.map((row) => row.read(countExp)).getSingle();
+        var result = await (query.map((row) => row.read(countExp))).get();
         Random random = Random();
-        int randomNumber1 = random.nextInt(result! + 1);
-        final dynamic maps = await (select(populars)
-          ..where((t) => t.id.equals(randomNumber1)))
-            .getSingle();
-        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        int randomNumber1 = random.nextInt(result.length);
+        final List<Popular> maps = await (select(populars)
+              ..where((t) => t.id.equals(result[randomNumber1]!))
+              ..limit(1))
+            .get();
+        ListContent tile = ListContent(
+            name: maps[0].title,
+            url: maps[0].link,
+            imageUrl: maps[0].imgLink,
+            backdropPath: maps[0].backdropUrl);
         tileList.add(tile);
         break;
       case "TrendingDay":
-        var countExp = trendingDays.id.count();
+        var countExp = trendingDays.id;
         final query = selectOnly(trendingDays)..addColumns([countExp]);
-        var result = await query.map((row) => row.read(countExp)).getSingle();
+        var result = await (query.map((row) => row.read(countExp))).get();
         Random random = Random();
-        int randomNumber1 = random.nextInt(result! + 1);
-        final dynamic maps = await (select(trendingDays)
-          ..where((t) => t.id.equals(randomNumber1)))
-            .getSingle();
-        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        int randomNumber1 = random.nextInt(result.length);
+        final List<TrendingDay> maps = await (select(trendingDays)
+              ..where((t) => t.id.equals(result[randomNumber1]!))
+              ..limit(1))
+            .get();
+        ListContent tile = ListContent(
+            name: maps[0].title,
+            url: maps[0].link,
+            imageUrl: maps[0].imgLink,
+            backdropPath: maps[0].backdropUrl);
         tileList.add(tile);
         break;
       case "TrendingWeek":
-        var countExp = trendingWeeks.id.count();
+        var countExp = trendingWeeks.id;
         final query = selectOnly(trendingWeeks)..addColumns([countExp]);
-        var result = await query.map((row) => row.read(countExp)).getSingle();
+        var result = await (query.map((row) => row.read(countExp))).get();
         Random random = Random();
-        int randomNumber1 = random.nextInt(result! + 1);
-        final dynamic maps = await (select(trendingWeeks)
-          ..where((t) => t.id.equals(randomNumber1)))
-            .getSingle();
-        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        int randomNumber1 = random.nextInt(result.length);
+        final List<TrendingWeek> maps = await (select(trendingWeeks)
+              ..where((t) => t.id.equals(result[randomNumber1]!))
+              ..limit(1))
+            .get(); //here is issue with bad state
+        ListContent tile = ListContent(
+            name: maps[0].title,
+            url: maps[0].link,
+            imageUrl: maps[0].imgLink,
+            backdropPath: maps[0].backdropUrl);
         tileList.add(tile);
         break;
       default:
-        var countExp = populars.id.count();
+        var countExp = populars.id;
         final query = selectOnly(populars)..addColumns([countExp]);
-        var result = await query.map((row) => row.read(countExp)).getSingle();
+        var result = await (query.map((row) => row.read(countExp))).get();
         Random random = Random();
-        int randomNumber1 = random.nextInt(result! + 1);
-        final dynamic maps = await (select(populars)
-          ..where((t) => t.id.equals(randomNumber1)))
-            .getSingle();
-        ListContent tile = ListContent(name: maps.title, url: maps.link, imageUrl: maps.imgLink, backdropPath: maps.backdropUrl);
+        int randomNumber1 = random.nextInt(result.length);
+        final List<Popular> maps = await (select(populars)
+              ..where((t) => t.id.equals(result[randomNumber1]!))
+              ..limit(1))
+            .get();
+        ListContent tile = ListContent(
+            name: maps[0].title,
+            url: maps[0].link,
+            imageUrl: maps[0].imgLink,
+            backdropPath: maps[0].backdropUrl);
         tileList.add(tile);
         break;
     }
     return tileList[0];
+  }
+
+  Future<void> deleteEverything() {
+    return transaction(() async {
+      // you only need this if you've manually enabled foreign keys
+      // await customStatement('PRAGMA foreign_keys = OFF');
+      for (final table in allTables) {
+        await delete(table).go();
+      }
+      await customStatement("DELETE FROM sqlite_sequence");
+    });
   }
 }
 
