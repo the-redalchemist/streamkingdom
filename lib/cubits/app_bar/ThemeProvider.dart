@@ -47,6 +47,11 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
+extension CustomColorSchemeX on ColorScheme {
+  Color get gradientColor =>
+      brightness == Brightness.light ? Colors.white : Colors.black;
+}
+
 /*
 darkTheme: ThemeData(
     fontFamily: "NetflixSans",

@@ -2,12 +2,12 @@ import 'dart:developer';
 
 import 'package:fading_edge_scrollview/fading_edge_scrollview.dart';
 import 'package:flutter/material.dart';
+import 'package:streamkingdom/cubits/app_bar/ThemeProvider.dart';
 import 'package:streamkingdom/models/header_content_model.dart';
 import 'package:transparent_image/transparent_image.dart';
 import '../assets.dart';
 import '../models/content_model.dart';
 import 'package:streamkingdom/widgets/widgets.dart';
-// import 'package:video_player/video_player.dart';
 
 class ContentHeader extends StatelessWidget {
   final Content featuredContent;
@@ -104,9 +104,9 @@ class _ContentHeaderMobileState extends State<_ContentHeaderMobile> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 400),
             height: isPlaying ? 450 : 500.0,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                  colors: [Colors.black, Colors.transparent],
+                  colors: [Theme.of(context).colorScheme.gradientColor , Colors.transparent],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter),
             ),
@@ -245,9 +245,9 @@ class _ContentHeaderDesktopState extends State<_ContentHeaderDesktop> {
             child: AspectRatio(
               aspectRatio: 2.344,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                      colors: [Colors.black, Colors.transparent],
+                      colors: [Theme.of(context).colorScheme.gradientColor, Colors.transparent],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter),
                 ),
